@@ -1,0 +1,4 @@
+
+### Listar todos os serviços
+GET http://localhost:8080/servicos
+Accept: application/json
