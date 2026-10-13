@@ -1,0 +1,35 @@
+### A evidência da frente 3 · idempotência
+#
+# Idempotente é sobre o ESTADO DO SERVIDOR, não sobre a resposta. Rode cada
+# bloco duas vezes seguidas e compare o que mudou no servidor, não o número
+# que voltou.
+
+### 1 · POST duas vezes — NÃO é idempotente
+POST http://localhost:8080/clientes
+Content-Type: application/json
+
+{ "nome": "Pedro Lima", "email": "pedro@exemplo.com", "categoriaFavorita": "Corte" }
+
+# 1ª vez: 201 Created, com um id
+# 2ª vez: 201 Created, com OUTRO id  <- existem dois Pedros agora
+# Repetir criou coisa nova.
+
+### 2 · PUT duas vezes — é idempotente
+PUT http://localhost:8080/clientes/1
+Content-Type: application/json
+
+{ "nome": "Carlos Henrique Silva", "email": "carlos@exemplo.com", "categoriaFavorita": "Barba" }
+
+# 1ª vez: 200 OK
+# 2ª vez: 200 OK, e o registro está IDÊNTICO
+# O estado final é o pedido, tenha a chamada acontecido uma ou dez vezes.
+
+### 3 · DELETE duas vezes — é idempotente
+DELETE http://localhost:8080/clientes/1
+
+# 1ª vez: 204 No Content
+# 2ª vez: 404 Not Found
+# As respostas DIFEREM; o estado NÃO: o cliente 1 não existe nas duas vezes.
+
+### 4 · confira o estado, que é o que importa
+GET http://localhost:8080/clientes
