@@ -1,4 +1,183 @@
+### Barbearia — a API
+#
+# IntelliJ roda direto; VS Code precisa da extensão REST Client.
+# Suba a aplicação com `./mvnw spring-boot:run` antes de clicar em Send Request.
+# Confira sempre o STATUS da resposta, não só o corpo.
 
-### Listar todos os serviços
+# =============================================================================
+# FRENTE 1 · Serviços (Elisio)
+# =============================================================================
+
+### listar os 12 serviços — 200
 GET http://localhost:8080/servicos
-Accept: application/json
+
+### um serviço — 200
+GET http://localhost:8080/servicos/1
+
+### um serviço que NÃO existe — 404
+GET http://localhost:8080/servicos/nao-existe
+
+### criar — 201 + cabeçalho Location (o corpo não manda id: a API inventa)
+POST http://localhost:8080/servicos
+Content-Type: application/json
+
+{
+  "nome": "Corte Militar",
+  "descricao": "Corte baixo, reto e sem frescura.",
+  "categoria": "Corte",
+  "preco": 32.5,
+  "duracaoMinutos": 25,
+  "promocao": false,
+  "barbeiroSlug": "tiago-classico"
+}
+
+### criar com dados inválidos — 400 com a lista de campos errados
+POST http://localhost:8080/servicos
+Content-Type: application/json
+
+{
+  "nome": "",
+  "categoria": "Corte",
+  "preco": -10,
+  "barbeiroSlug": "tiago-classico"
+}
+
+### trocar — 200 (404 se o id não existir)
+PUT http://localhost:8080/servicos/1
+Content-Type: application/json
+
+{
+  "nome": "Corte Degradê Premium",
+  "descricao": "Degradê na máquina, navalha e finalização com pomada.",
+  "categoria": "Corte",
+  "preco": 55,
+  "duracaoMinutos": 50,
+  "promocao": false,
+  "barbeiroSlug": "marcos-fade"
+}
+
+### apagar — 204, e 404 na segunda vez
+DELETE http://localhost:8080/servicos/12
+
+
+# =============================================================================
+# FRENTE 2 · Barbeiros (Alessandra)
+# =============================================================================
+
+### listar os 5 barbeiros — 200
+GET http://localhost:8080/barbeiros
+
+### um barbeiro pelo slug — 200
+GET http://localhost:8080/barbeiros/marcos-fade
+
+### slug que não existe — 404
+GET http://localhost:8080/barbeiros/nao-existe
+
+### criar — 201, e o Location aponta para o slug que O CLIENTE escolheu
+POST http://localhost:8080/barbeiros
+Content-Type: application/json
+
+{
+  "nome": "Caio Mendes",
+  "slug": "caio-cortes",
+  "especialidade": "Cortes modernos",
+  "descricao": "Chegou este ano e já tem fila."
+}
+
+### criar com slug repetido — 409
+POST http://localhost:8080/barbeiros
+Content-Type: application/json
+
+{
+  "nome": "Outro Marcos",
+  "slug": "marcos-fade",
+  "especialidade": "Degradê"
+}
+
+### criar com slug em formato inválido — 400 (maiúscula e espaço não pode)
+POST http://localhost:8080/barbeiros
+Content-Type: application/json
+
+{
+  "nome": "Caio Mendes",
+  "slug": "Caio Cortes",
+  "especialidade": "Cortes modernos"
+}
+
+### apagar — 204, e 404 na segunda vez
+DELETE http://localhost:8080/barbeiros/caio-cortes
+
+
+# =============================================================================
+# FRENTE 3 · Clientes (Cintia)
+# =============================================================================
+
+### listar os 6 clientes — 200
+GET http://localhost:8080/clientes
+
+### um cliente — 200
+GET http://localhost:8080/clientes/1
+
+### um cliente que NÃO existe — 404
+GET http://localhost:8080/clientes/nao-existe
+
+### criar — 201 + Location
+POST http://localhost:8080/clientes
+Content-Type: application/json
+
+{
+  "nome": "Lucas Ferreira",
+  "email": "lucas@exemplo.com",
+  "telefone": "(81) 99999-0007",
+  "categoriaFavorita": "Combo"
+}
+
+### criar com e-mail inválido — 400
+POST http://localhost:8080/clientes
+Content-Type: application/json
+
+{
+  "nome": "Lucas Ferreira",
+  "email": "isso-nao-e-email"
+}
+
+### trocar — 200
+PUT http://localhost:8080/clientes/1
+Content-Type: application/json
+
+{
+  "nome": "Carlos Henrique Silva",
+  "email": "carlos@exemplo.com",
+  "telefone": "(81) 99999-0001",
+  "categoriaFavorita": "Barba"
+}
+
+### apagar — 204
+DELETE http://localhost:8080/clientes/6
+
+
+# =============================================================================
+# FRENTE 4 · Busca e estatísticas (Ana Claudia)
+# =============================================================================
+
+### os números do catálogo — 200
+GET http://localhost:8080/estatisticas
+
+### busca com um filtro — 200, três barbas
+GET http://localhost:8080/servicos/busca?categoria=Barba
+
+### busca com dois filtros — 200
+GET http://localhost:8080/servicos/busca?categoria=Corte&precoMax=40
+
+### busca por barbeiro — 200
+GET http://localhost:8080/servicos/busca?barbeiro=bia-barber
+
+### busca por booleano — 200
+GET http://localhost:8080/servicos/busca?promocao=true
+
+### busca sem filtro nenhum — 200, a lista inteira
+GET http://localhost:8080/servicos/busca
+
+### busca sem resultado — 200 com [], e isso está CERTO
+# Você procurou, o resultado é zero. Diferente de pedir um id que não existe (404).
+GET http://localhost:8080/servicos/busca?categoria=Pintura
