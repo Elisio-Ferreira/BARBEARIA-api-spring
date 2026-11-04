@@ -1,7 +1,9 @@
+
 package br.edu.faculdade.barbearia;
 
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -13,13 +15,18 @@ public class BuscaService {
         this.repositorio = repositorio;
     }
 
-    public List<ServicoResposta> buscar(String categoria, String barbeiro,
-                                        Double precoMax, Boolean promocao) {
-        return repositorio.todos().stream()
-                .filter(s -> categoria == null || s.categoria().equalsIgnoreCase(categoria))
-                .filter(s -> barbeiro == null || s.barbeiroSlug().equalsIgnoreCase(barbeiro))
-                .filter(s -> precoMax == null || s.preco() <= precoMax)
-                .filter(s -> promocao == null || s.promocao() == promocao)
+    public List<ServicoResposta> buscar(BigDecimal precoMax) {
+
+        return repositorio.todos()
+                .stream()
+
+                .filter(Servico::ativo)
+
+                .filter(s ->
+                        precoMax == null ||
+                                s.preco().compareTo(precoMax) <= 0
+                )
+
                 .map(ServicoResposta::de)
                 .toList();
     }

@@ -1,3 +1,4 @@
+
 package br.edu.faculdade.barbearia;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -5,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -19,10 +21,8 @@ public class BuscaController {
 
     @GetMapping("/busca")
     public List<ServicoResposta> buscar(
-            @RequestParam(required = false) String categoria,
-            @RequestParam(required = false) String barbeiro,
-            @RequestParam(required = false) Double precoMax,
-            @RequestParam(required = false) Boolean promocao) {
-        return servico.buscar(categoria, barbeiro, precoMax, promocao);
+            @RequestParam(required = false) BigDecimal precoMax
+    ) {
+        return servico.buscar(precoMax);
     }
 }
