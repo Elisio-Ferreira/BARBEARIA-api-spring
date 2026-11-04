@@ -1,21 +1,23 @@
+
 package br.edu.faculdade.barbearia;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-/**
- * Frente 3 · o que o cliente da API manda no POST e no PUT de /clientes.
- * Sem id: quem inventa é a API.
- */
 public record ClienteEntrada(
-        @NotBlank(message = "o nome é obrigatório")
+
+        @NotBlank(message = "O nome é obrigatório")
+        @Size(max = 100, message = "O nome pode ter no máximo 100 caracteres")
         String nome,
 
-        @NotBlank(message = "o e-mail é obrigatório")
-        @Email(message = "o e-mail não é válido")
+        @NotBlank(message = "O e-mail é obrigatório")
+        @Email(message = "O e-mail não é válido")
         String email,
 
+        @NotBlank(message = "O telefone é obrigatório")
         String telefone,
 
-        String categoriaFavorita
-) { }
+        String endereco
+) {
+}

@@ -1,25 +1,23 @@
+
 package br.edu.faculdade.barbearia;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 
-/**
- * Frente 2 · o que o cliente manda no POST /barbeiros.
- *
- * O slug vem do cliente, então precisa de formato: só minúsculas, números e
- * hífens, sem espaço nem acento, porque ele vira parte do endereço.
- */
 public record BarbeiroEntrada(
-        @NotBlank(message = "o nome é obrigatório")
+
+        @NotBlank(message = "O nome é obrigatório")
         String nome,
 
-        @NotBlank(message = "o slug é obrigatório")
-        @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$",
-                message = "o slug deve ter só letras minúsculas, números e hífens (ex.: joao-navalha)")
-        String slug,
+        @NotBlank(message = "O telefone é obrigatório")
+        String telefone,
 
-        @NotBlank(message = "a especialidade é obrigatória")
-        String especialidade,
+        @NotBlank(message = "O endereço é obrigatório")
+        String endereco,
 
-        String descricao
-) { }
+        @NotBlank(message = "O e-mail é obrigatório")
+        @Email(message = "O e-mail não é válido")
+        String email
+
+) {
+}

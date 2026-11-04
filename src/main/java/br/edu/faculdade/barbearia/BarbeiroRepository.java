@@ -1,48 +1,116 @@
+
 package br.edu.faculdade.barbearia;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Mesma forma do ServicoRepository, com uma diferença: aqui se busca por slug.
- *
- * Os cinco slugs precisam bater, letra por letra, com o barbeiroSlug dos
- * serviços. Um erro de digitação aqui não quebra nada agora, só aparece
- * quando a API for juntar serviço e barbeiro.
- */
 @Repository
 public class BarbeiroRepository {
 
-    private final List<Barbeiro> barbeiros = new CopyOnWriteArrayList<>(List.of(
-            new Barbeiro("1", "Marcos Almeida", "marcos-fade", "Degradê e barba desenhada",
-                    "Dez anos de cadeira, referência em fade e acabamento."),
-            new Barbeiro("2", "Tiago Ribeiro", "tiago-classico", "Corte social e barba com toalha quente",
-                    "O clássico: tesoura, navalha e conversa boa."),
-            new Barbeiro("3", "Eduardo Lima", "dudu-tesoura", "Corte infantil e combos",
-                    "Especialista em atender criança sem choro."),
-            new Barbeiro("4", "Leonardo Pires", "leo-navalha", "Corte e barba na navalha",
-                    "Trabalha só na navalha, do contorno ao acabamento."),
-            new Barbeiro("5", "Beatriz Souza", "bia-barber", "Tratamentos e sobrancelha",
-                    "Cuida da parte química e do detalhe: pigmentação, hidratação e design de sobrancelha.")
-    ));
+    private final JdbcTemplate jdbcTemplate;
+
+    public BarbeiroRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private final RowMapper<Barbeiro> barbeiroMapper = (rs, rowNum) ->
+            new Barbeiro(
+                    rs.getString("id"),
+                    rs.getString("perfil_id"),
+                    rs.getString("nome"),
+                    rs.getString("telefone"),
+                    rs.getString("endereco"),
+                    rs.getString("email"),
+                    rs.getBoolean("ativo")
+            );
 
     public List<Barbeiro> todos() {
-        return List.copyOf(barbeiros);
+
+        String sql = """
+                SELECT
+                    b.id,
+                    b.perfil_id,
+                    p.nome,
+                    p.telefone,
+                    b.endereco,
+                    u.email,
+                    b.ativo
+                FROM public.barbeiros b
+                INNER JOIN public.perfis p
+                    ON p.id = b.perfil_id
+                INNER JOIN auth.users u
+                    ON u.id = p.id
+                ORDER BY p.nome
+                """;
+
+        return jdbcTemplate.query(sql, barbeiroMapper);
     }
 
-    public Optional<Barbeiro> porSlug(String slug) {
-        return barbeiros.stream().filter(b -> b.slug().equals(slug)).findFirst();
+    public Optional<Barbeiro> porId(String id) {
+
+        String sql = """
+                SELECT
+                    b.id,
+                    b.perfil_id,
+                    p.nome,
+                    p.telefone,
+                    b.endereco,
+                    u.email,
+                    b.ativo
+                FROM public.barbeiros b
+                INNER JOIN public.perfis p
+                    ON p.id = b.perfil_id
+                INNER JOIN auth.users u
+                    ON u.id = p.id
+                WHERE b.id = ?
+                """;
+
+        return jdbcTemplate.query(sql, barbeiroMapper, id)
+                .stream()
+                .findFirst();
     }
 
-    public Barbeiro salvar(Barbeiro novo) {
-        barbeiros.add(novo);
-        return novo;
+    public Barbeiro salvar(Barbeiro barbeiro) {
+
+        String sql = """
+                INSERT INTO public.barbeiros (
+                    perfil_id,
+                    endereco,
+                    ativo
+                )
+                VALUES (?, ?, ?)
+                RETURNING id
+                """;
+
+        String id = jdbcTemplate.queryForObject(
+                sql,
+                String.class,
+                barbeiro.perfilId(),
+                barbeiro.endereco(),
+                barbeiro.ativo()
+        );
+
+        return porId(id)
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "Não foi possível recuperar o barbeiro cadastrado."
+                        )
+                );
     }
 
-    public boolean remover(String slug) {
-        return barbeiros.removeIf(b -> b.slug().equals(slug));
+    public boolean desativar(String id) {
+
+        String sql = """
+                UPDATE public.barbeiros
+                SET ativo = false
+                WHERE id = ?
+                  AND ativo = true
+                """;
+
+        return jdbcTemplate.update(sql, id) > 0;
     }
 }
