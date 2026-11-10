@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class ServicoRepository {
@@ -55,7 +56,7 @@ public class ServicoRepository {
                     duracao_minutos,
                     ativo
                 FROM public.servicos
-                WHERE id = ?
+                WHERE id = CAST(? AS UUID)
                 """;
 
         return jdbcTemplate.query(sql, servicoMapper, id)
@@ -77,9 +78,9 @@ public class ServicoRepository {
                 RETURNING id
                 """;
 
-        String id = jdbcTemplate.queryForObject(
+        UUID id = jdbcTemplate.queryForObject(
                 sql,
-                String.class,
+                UUID.class,
                 novo.nome(),
                 novo.descricao(),
                 novo.preco(),
@@ -87,7 +88,7 @@ public class ServicoRepository {
                 novo.ativo()
         );
 
-        return porId(id)
+        return porId(id.toString())
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "Não foi possível recuperar o serviço cadastrado."
@@ -105,7 +106,7 @@ public class ServicoRepository {
                     preco = ?,
                     duracao_minutos = ?,
                     ativo = ?
-                WHERE id = ?
+                WHERE id = CAST(? AS UUID)
                 """;
 
         int linhasAlteradas = jdbcTemplate.update(
@@ -130,7 +131,7 @@ public class ServicoRepository {
         String sql = """
                 UPDATE public.servicos
                 SET ativo = false
-                WHERE id = ?
+                WHERE id = CAST(? AS UUID)
                   AND ativo = true
                 """;
 
