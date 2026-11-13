@@ -4,6 +4,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -11,7 +13,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.net.URI;
 import java.util.LinkedHashMap;
@@ -19,6 +20,11 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class TratadorDeErros {
+
+    @ExceptionHandler(RegraDeNegocioException.class)
+    public ProblemDetail regraDeNegocio(RegraDeNegocioException ex) {
+        return problema(ex.getStatus(), titulo(ex.getStatus()), ex.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail validacao(MethodArgumentNotValidException ex) {
@@ -97,9 +103,25 @@ public class TratadorDeErros {
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail generico(Exception ex) {
+        // Erros do próprio Spring (rota inexistente, método não permitido, etc.)
+        if (ex instanceof ErrorResponse resposta) {
+            return resposta.getBody();
+        }
+
         ex.printStackTrace(); // fica só no console do servidor
         return problema(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno",
                 "Ocorreu um erro inesperado.");
+    }
+
+    private String titulo(HttpStatus status) {
+        return switch (status) {
+            case BAD_REQUEST -> "Requisição inválida";
+            case UNAUTHORIZED -> "Não autenticado";
+            case FORBIDDEN -> "Acesso negado";
+            case NOT_FOUND -> "Não encontrado";
+            case CONFLICT -> "Conflito";
+            default -> "Erro";
+        };
     }
 
     private ProblemDetail problema(HttpStatusCode status, String titulo, String detalhe) {
