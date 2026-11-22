@@ -12,9 +12,11 @@ import java.util.UUID;
 public class ClienteController {
 
     private final ClienteService servico;
+    private final ControleDeAcesso acesso;
 
-    public ClienteController(ClienteService servico) {
+    public ClienteController(ClienteService servico, ControleDeAcesso acesso) {
         this.servico = servico;
+        this.acesso = acesso;
     }
 
     @GetMapping
@@ -29,15 +31,25 @@ public class ClienteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Cliente> porId(@PathVariable UUID id) {
+    public ResponseEntity<Cliente> porId(
+            @PathVariable UUID id,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirCliente(usuario, id.toString());
+
         return servico.buscarPorId(id.toString())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cliente> atualizar(@PathVariable UUID id,
-                                             @Valid @RequestBody ClienteAtualizacao dados) {
+    public ResponseEntity<Cliente> atualizar(
+            @PathVariable UUID id,
+            @Valid @RequestBody ClienteAtualizacao dados,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirCliente(usuario, id.toString());
+
         if (!servico.atualizar(id.toString(), dados)) {
             return ResponseEntity.notFound().build();
         }
