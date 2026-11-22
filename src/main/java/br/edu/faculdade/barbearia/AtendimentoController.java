@@ -14,15 +14,20 @@ import java.util.UUID;
 public class AtendimentoController {
 
     private final AtendimentoService servico;
+    private final ControleDeAcesso acesso;
 
-    public AtendimentoController(AtendimentoService servico) {
+    public AtendimentoController(AtendimentoService servico, ControleDeAcesso acesso) {
         this.servico = servico;
+        this.acesso = acesso;
     }
 
     @PostMapping("/agendamentos/{agendamentoId}/atendimento")
     public ResponseEntity<Atendimento> registrar(
             @PathVariable UUID agendamentoId,
-            @Valid @RequestBody(required = false) AtendimentoEntrada entrada) {
+            @Valid @RequestBody(required = false) AtendimentoEntrada entrada,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, agendamentoId.toString());
 
         String observacoes = entrada == null ? null : entrada.observacoes();
         Atendimento criado = servico.registrar(agendamentoId.toString(), observacoes);
@@ -30,7 +35,11 @@ public class AtendimentoController {
     }
 
     @GetMapping("/agendamentos/{agendamentoId}/atendimento")
-    public Atendimento porAgendamento(@PathVariable UUID agendamentoId) {
+    public Atendimento porAgendamento(
+            @PathVariable UUID agendamentoId,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, agendamentoId.toString());
         return servico.porAgendamento(agendamentoId.toString());
     }
 
@@ -41,11 +50,14 @@ public class AtendimentoController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate) {
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
 
-        return servico.listar(
-                clienteId == null ? null : clienteId.toString(),
-                barbeiroId == null ? null : barbeiroId.toString(),
-                de, ate);
+        String cliente = acesso.filtroCliente(usuario,
+                clienteId == null ? null : clienteId.toString());
+        String barbeiro = acesso.filtroBarbeiro(usuario,
+                barbeiroId == null ? null : barbeiroId.toString());
+
+        return servico.listar(cliente, barbeiro, de, ate);
     }
 }

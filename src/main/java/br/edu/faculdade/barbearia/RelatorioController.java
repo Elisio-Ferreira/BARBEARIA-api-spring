@@ -2,6 +2,7 @@ package br.edu.faculdade.barbearia;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,9 +14,11 @@ import java.util.UUID;
 public class RelatorioController {
 
     private final RelatorioService servico;
+    private final ControleDeAcesso acesso;
 
-    public RelatorioController(RelatorioService servico) {
+    public RelatorioController(RelatorioService servico, ControleDeAcesso acesso) {
         this.servico = servico;
+        this.acesso = acesso;
     }
 
     @GetMapping("/agenda")
@@ -24,11 +27,13 @@ public class RelatorioController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
 
-        return servico.agenda(
-                barbeiroId == null ? null : barbeiroId.toString(),
-                de, ate, status);
+        String barbeiro = acesso.filtroBarbeiro(usuario,
+                barbeiroId == null ? null : barbeiroId.toString());
+
+        return servico.agenda(barbeiro, de, ate, status);
     }
 
     @GetMapping("/relatorios/atendimentos")

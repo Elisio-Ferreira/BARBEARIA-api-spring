@@ -15,9 +15,11 @@ import java.util.UUID;
 public class AgendamentoController {
 
     private final AgendamentoService servico;
+    private final ControleDeAcesso acesso;
 
-    public AgendamentoController(AgendamentoService servico) {
+    public AgendamentoController(AgendamentoService servico, ControleDeAcesso acesso) {
         this.servico = servico;
+        this.acesso = acesso;
     }
 
     @GetMapping("/disponibilidade")
@@ -37,47 +39,76 @@ public class AgendamentoController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate de,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate ate,
-            @RequestParam(required = false) String status) {
-        return servico.listar(
-                clienteId == null ? null : clienteId.toString(),
-                barbeiroId == null ? null : barbeiroId.toString(),
-                de, ate, status);
+            @RequestParam(required = false) String status,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        String cliente = acesso.filtroCliente(usuario,
+                clienteId == null ? null : clienteId.toString());
+        String barbeiro = acesso.filtroBarbeiro(usuario,
+                barbeiroId == null ? null : barbeiroId.toString());
+
+        return servico.listar(cliente, barbeiro, de, ate, status);
     }
 
     @PostMapping
     public ResponseEntity<Agendamento> criar(
-            @Valid @RequestBody AgendamentoEntrada entrada) {
+            @Valid @RequestBody AgendamentoEntrada entrada,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirCliente(usuario, entrada.clienteId().toString());
+        acesso.exigirBarbeiro(usuario, entrada.barbeiroId().toString());
+
         Agendamento criado = servico.criar(entrada);
         return ResponseEntity.status(HttpStatus.CREATED).body(criado);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Agendamento> porId(@PathVariable UUID id) {
+    public ResponseEntity<Agendamento> porId(
+            @PathVariable UUID id,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, id.toString());
+
         return servico.buscarPorId(id.toString())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/confirmar")
-    public Agendamento confirmar(@PathVariable UUID id) {
+    public Agendamento confirmar(
+            @PathVariable UUID id,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, id.toString());
         return servico.confirmar(id.toString());
     }
 
     @PatchMapping("/{id}/cancelar")
     public Agendamento cancelar(
             @PathVariable UUID id,
-            @Valid @RequestBody(required = false) CancelamentoEntrada entrada) {
+            @Valid @RequestBody(required = false) CancelamentoEntrada entrada,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, id.toString());
         String motivo = entrada == null ? null : entrada.motivo();
         return servico.cancelar(id.toString(), motivo);
     }
 
     @PatchMapping("/{id}/falta")
-    public Agendamento falta(@PathVariable UUID id) {
+    public Agendamento falta(
+            @PathVariable UUID id,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, id.toString());
         return servico.registrarFalta(id.toString());
     }
 
     @PatchMapping("/{id}/concluir")
-    public Agendamento concluir(@PathVariable UUID id) {
+    public Agendamento concluir(
+            @PathVariable UUID id,
+            @RequestAttribute(AutenticacaoInterceptor.ATRIBUTO) UsuarioAutenticado usuario) {
+
+        acesso.exigirAgendamento(usuario, id.toString());
         return servico.concluir(id.toString());
     }
 }
