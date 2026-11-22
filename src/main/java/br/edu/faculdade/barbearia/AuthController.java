@@ -1,6 +1,7 @@
 package br.edu.faculdade.barbearia;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,5 +26,17 @@ public class AuthController {
             @Valid @RequestBody CadastroClienteEntrada entrada
     ) {
         return servico.cadastrarCliente(entrada);
+    }
+
+    @GetMapping("/me")
+    public UsuarioAutenticado me(
+            @RequestAttribute(name = "usuarioAutenticado",
+                    required = false) UsuarioAutenticado usuario
+    ) {
+        if (usuario == null) {
+            throw new RegraDeNegocioException(HttpStatus.UNAUTHORIZED,
+                    "Envie o token no cabeçalho Authorization: Bearer <token>.");
+        }
+        return usuario;
     }
 }
