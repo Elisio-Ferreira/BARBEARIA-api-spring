@@ -21,6 +21,13 @@ public class AuthController {
         return servico.entrar(entrada);
     }
 
+    @PostMapping("/refresh")
+    public AuthResposta renovar(
+            @Valid @RequestBody RefreshEntrada entrada
+    ) {
+        return servico.renovar(entrada);
+    }
+
     @PostMapping("/cadastro/cliente")
     public CadastroClienteResposta cadastrarCliente(
             @Valid @RequestBody CadastroClienteEntrada entrada

@@ -2,7 +2,9 @@ package br.edu.faculdade.barbearia;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.Map;
@@ -44,6 +46,46 @@ public class AuthService {
             throw new IllegalStateException(
                     "O Supabase não retornou os dados do login."
             );
+        }
+
+        Map<String, Object> usuario = paraMapa(resposta.get("user"));
+
+        Object expira = resposta.get("expires_in");
+        long expiresIn = expira instanceof Number n ? n.longValue() : 0L;
+
+        return new AuthResposta(
+                texto(resposta, "access_token"),
+                texto(resposta, "refresh_token"),
+                texto(resposta, "token_type"),
+                expiresIn,
+                texto(usuario, "id"),
+                texto(usuario, "email")
+        );
+    }
+
+    public AuthResposta renovar(RefreshEntrada entrada) {
+
+        Map<String, Object> resposta;
+
+        try {
+            resposta = supabase.post()
+                    .uri("/auth/v1/token?grant_type=refresh_token")
+                    .header("apikey", anonKey)
+                    .body(Map.of("refresh_token", entrada.refreshToken()))
+                    .retrieve()
+                    .body(MAPA);
+        } catch (HttpClientErrorException ex) {
+            int status = ex.getStatusCode().value();
+            if (status == 400 || status == 401 || status == 403 || status == 422) {
+                throw new RegraDeNegocioException(HttpStatus.UNAUTHORIZED,
+                        "Refresh token inválido ou expirado. Faça login novamente.");
+            }
+            throw ex; // 429 e outros continuam no tratamento padrão
+        }
+
+        if (resposta == null) {
+            throw new IllegalStateException(
+                    "O Supabase não retornou os dados da renovação.");
         }
 
         Map<String, Object> usuario = paraMapa(resposta.get("user"));
