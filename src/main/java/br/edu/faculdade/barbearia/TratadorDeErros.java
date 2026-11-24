@@ -78,7 +78,10 @@ public class TratadorDeErros {
                     "A senha não atende aos requisitos de segurança.");
         }
         if (corpo.contains("invalid_credentials")
-                || corpo.contains("Invalid login credentials")) {
+                || corpo.contains("Invalid login credentials")
+                || corpo.contains("refresh_token_not_found")
+                || corpo.contains("refresh_token_already_used")
+                || corpo.contains("Invalid Refresh Token")) {
             return problema(HttpStatus.UNAUTHORIZED, "Credenciais inválidas",
                     "E-mail ou senha incorretos.");
         }

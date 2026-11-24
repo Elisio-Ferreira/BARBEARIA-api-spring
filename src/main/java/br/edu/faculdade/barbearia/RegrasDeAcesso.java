@@ -33,6 +33,7 @@ public final class RegrasDeAcesso {
 
             // ---------- Públicas ----------
             publico("POST", "/auth/login"),
+            publico("POST", "/auth/refresh"),
             publico("POST", "/auth/cadastro/**"),
             publico("GET", "/servicos/**"),
             publico("GET", "/agendamentos/disponibilidade"),
@@ -70,6 +71,7 @@ public final class RegrasDeAcesso {
             papeis("PATCH", "/agendamentos/*/confirmar", ADM, BAR),
             papeis("PATCH", "/agendamentos/*/falta", ADM, BAR),
             papeis("PATCH", "/agendamentos/*/concluir", ADM, BAR),
+            papeis("PATCH", "/agendamentos/*/remarcar", ADM, BAR, CLI),
 
             // ---------- Atendimentos ----------
             autenticado("GET", "/agendamentos/*/atendimento"),
