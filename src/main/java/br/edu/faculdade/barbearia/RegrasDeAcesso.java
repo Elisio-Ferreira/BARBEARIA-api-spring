@@ -38,6 +38,10 @@ public final class RegrasDeAcesso {
             publico("GET", "/servicos/**"),
             publico("GET", "/agendamentos/disponibilidade"),
 
+            publico("GET", "/v3/api-docs/**"),
+            publico("GET", "/swagger-ui/**"),
+            publico("GET", "/swagger-ui.html"),
+
             // ---------- Qualquer pessoa logada ----------
             autenticado("GET", "/auth/me"),
 
