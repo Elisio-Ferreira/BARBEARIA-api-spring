@@ -139,5 +139,4 @@ Depois: `git push -u origin <sua-branch>` e abra um Pull Request para `main`.
 > barbeiros. Combinem essas assinaturas antes de cada um mexer no seu pedaço, e
 > rodem a aplicação inteira depois do merge.
 
-senha banco 
-analistadedados
+Atualizado
